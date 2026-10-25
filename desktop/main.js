@@ -505,14 +505,33 @@ async function runSmokeBody(check, report, finish) {
   // Keep the window above everything else while the smoke runs: a fully occluded
   // window stops producing frames, and capturePage would then hand back stale ones.
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
+  // show()/restore() are asynchronous — wait until the window really is on screen
+  for (let i = 0; i < 20 && (!mainWindow.isVisible() || mainWindow.isMinimized()); i++) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    else mainWindow.show();
+    await delay(150);
+  }
   await delay(300);
 
   const js = (code) => wc.executeJavaScript(code, true);
+  const winState = async () => ({
+    visible: mainWindow.isVisible(),
+    minimized: mainWindow.isMinimized(),
+    visibility: await js('document.visibilityState').catch(() => 'unknown')
+  });
+  const onScreen = (s) => s.visible && !s.minimized && s.visibility === 'visible';
   // A minimized/hidden window stops painting, and capturePage then returns the
-  // last painted frame — silently wrong evidence. Keep the window on screen.
+  // last painted frame — silently wrong evidence. restore()/show() take a moment
+  // to land, so poll instead of assuming one call was enough.
   const ensureVisible = async () => {
-    if (mainWindow.isMinimized()) mainWindow.restore();
-    if (!mainWindow.isVisible()) mainWindow.show();
+    let state = await winState();
+    for (let i = 0; i < 20 && !onScreen(state); i++) {
+      if (state.minimized) mainWindow.restore();
+      else mainWindow.show();
+      await delay(150);
+      state = await winState();
+    }
+    return onScreen(state);
   };
   // capturePage returns the last *completed* frame, so immediately after a DOM
   // change it can be one paint behind. Pump two animation frames (which forces a
@@ -527,31 +546,55 @@ async function runSmokeBody(check, report, finish) {
     );
   const frameHash = (png) => crypto.createHash('sha256').update(png).digest('hex').substring(0, 16);
   const shoot = async (name) => {
-    try {
-      await ensureVisible();
-      await pump();
-      await wc.capturePage(); // discard: makes sure a frame exists for this state
-      await delay(80);
-      const img = await wc.capturePage();
-      const png = img.toPNG();
-      const file = path.join(shotDir, name + '.png');
-      fs.writeFileSync(file, png);
-      report.screenshots.push(file);
-      const hash = frameHash(png);
-      const prev = report.frames.length ? report.frames[report.frames.length - 1].hash : null;
-      report.shots.push({
-        name,
-        visible: mainWindow.isVisible(),
-        minimized: mainWindow.isMinimized(),
-        visibility: await js('document.visibilityState'),
-        sameAsPreviousFrame: prev === hash
-      });
-      report.frames.push({ name, hash });
-      return img;
-    } catch (err) {
-      report.screenshots.push('FAILED ' + name + ': ' + err.message);
+    let last = null;
+    // up to 3 attempts: something else on this desktop can minimize the window
+    // mid-capture, and a minimized renderer does not paint
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const ensured = await ensureVisible();
+        const pre = await winState();
+        await pump();
+        await wc.capturePage(); // discard: makes sure a frame exists for this state
+        await delay(80);
+        const img = await wc.capturePage();
+        const post = await winState();
+        const png = img.toPNG();
+        last = {
+          attempt,
+          ensured,
+          pre,
+          post,
+          img,
+          png,
+          hash: frameHash(png),
+          ok: ensured && onScreen(pre) && onScreen(post)
+        };
+        if (last.ok) break;
+      } catch (err) {
+        last = { attempt, ok: false, error: String(err && err.message ? err.message : err) };
+      }
+    }
+    if (!last) return null;
+    if (last.error) {
+      report.screenshots.push('FAILED ' + name + ': ' + last.error);
+      report.shots.push({ name, attempts: last.attempt, ok: false, error: last.error });
       return null;
     }
+    const file = path.join(shotDir, name + '.png');
+    fs.writeFileSync(file, last.png);
+    report.screenshots.push(file);
+    const prev = report.frames.length ? report.frames[report.frames.length - 1].hash : null;
+    report.shots.push({
+      name,
+      attempts: last.attempt,
+      ensured: last.ensured,
+      pre: last.pre,
+      post: last.post,
+      ok: last.ok,
+      sameAsPreviousFrame: prev === last.hash
+    });
+    report.frames.push({ name, hash: last.hash });
+    return last.img;
   };
 
   // Reads the pixel at (8,8) out of a capture to prove the shot was taken after
@@ -727,9 +770,11 @@ async function runSmokeBody(check, report, finish) {
   }
 
   await overlayProbe('late');
-  const badShots = report.shots.filter((s) => !s.visible || s.minimized || s.visibility !== 'visible');
+  const badShots = report.shots.filter((s) => !s.ok);
+  const retried = report.shots.filter((s) => s.attempts > 1);
   check('window visible for every screenshot', badShots.length === 0,
-    badShots.length ? JSON.stringify(badShots) : report.shots.length + ' shot(s)');
+    (badShots.length ? JSON.stringify(badShots) : report.shots.length + ' shot(s)') +
+      (retried.length ? ' | re-shot after external minimize: ' + retried.map((s) => s.name).join(', ') : ''));
   await delay(300);
   finish();
 }

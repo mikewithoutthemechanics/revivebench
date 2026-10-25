@@ -1,7 +1,8 @@
 # SOURCE-OFFER.md — GPLv3 §5 written source offer
 
-**Status: TEMPLATE — the placeholder URL/contact below MUST be replaced with a
-real, persistent address before the first sale or physical shipment.**
+**Status: source URL published (2026-10-25). Seller contact block below is
+still a placeholder and MUST be filled in before the first sale or physical
+shipment.**
 
 > This file is part of ReviveBench's compliance set (see `../PRODUCT.md` §8 and
 > `../packaging/SELLER.md` §6). Ship it, unchanged except for the placeholders,
@@ -28,12 +29,14 @@ Choose either of the following:
    installation of the covered components, from:
 
    ```
-   https://EXAMPLE.COM/revivebench/source/      ← PLACEHOLDER: replace with your
-                                                  persistent URL before first sale
+   https://github.com/mikewithoutthemechanics/revivebench/releases/tag/v1.0.0
    ```
 
    The archive is published as `revivebench-<version>-gpl-source.tar.gz` next to
-   a `SHA256SUMS` file and the matching `SOURCE-OFFER.md`.
+   a `SHA256SUMS` file and the matching `SOURCE-OFFER.md` (same release page,
+   alongside a `.zip` of the same tree). Future versions are published the same
+   way on the repository's Releases page:
+   <https://github.com/mikewithoutthemechanics/revivebench/releases>
 
 2. **Physical medium (cost only).** Request a copy on a durable physical medium
    customarily used for software interchange by contacting:
@@ -81,8 +84,8 @@ years and publish the new address in the product's `THIRD_PARTY/NOTICE` file.
 
 ### Checklist before first sale (owner)
 
-- [ ] Replace `https://EXAMPLE.COM/revivebench/source/` with the real URL.
+- [x] Replace `https://EXAMPLE.COM/revivebench/source/` with the real URL.
 - [ ] Replace seller name, email, and postal address.
-- [ ] Publish `revivebench-1.0-gpl-source.tar.gz` + `SHA256SUMS` there.
+- [x] Publish `revivebench-1.0.0-gpl-source.tar.gz` + `SHA256SUMS` there.
 - [ ] Confirm `SELLER.md` §6 and this file agree on the URL.
 - [ ] Verify the file exists on the REVBENCH partition of a production stick.

@@ -117,8 +117,11 @@ Encoded in `THIRD_PARTY/`:
   program, so our proprietary GUI is fine — but every distribution (download
   and physical stick) must carry `THIRD_PARTY/GPL-3.0.txt` and
   `THIRD_PARTY/SOURCE-OFFER.md` (the GPLv3 §5 written offer for the bundled
-  GPL scripts). The offer URL in `SOURCE-OFFER.md` is a placeholder: **replace
-  it with a real, persistent URL before the first sale.**
+  GPL scripts). The offer URL is published — source archive + `SHA256SUMS` at
+  <https://github.com/mikewithoutthemechanics/revivebench/releases/tag/v1.0.0>.
+  Keep publishing each version's archive on the Releases page; the seller
+  contact block inside `SOURCE-OFFER.md` still needs your details before the
+  first sale.
 - **Activator is Apache-2.0.** Ship `THIRD_PARTY/Apache-2.0.txt` and
   `THIRD_PARTY/NOTICE`, keep the attribution intact.
 - **Store listing must honestly describe the tool** (§1). No euphemisms that
