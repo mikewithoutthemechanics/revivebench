@@ -16,7 +16,12 @@
       "deactivate": "/licenses/deactivate"
     },
     "timeoutMs": 15000,
-    "minRequestIntervalMs": 1500
+    "minRequestIntervalMs": 1500,
+    "expect": {
+      "storeId": "",
+      "productId": "",
+      "variantId": ""
+    }
   },
   "support": {
     "url": "https://example.com/revivebench/support",

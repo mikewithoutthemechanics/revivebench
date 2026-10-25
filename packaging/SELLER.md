@@ -74,6 +74,38 @@ promise it works.** "Likely" = buyer's risk, say so.
 - [ ] License status = active; no expiry unless intentionally sold that way.
 - [ ] Refund window shorter than your "burn" expectations — see §5.
 - [ ] Storefront description includes §1's "does NOT" paragraph.
+- [ ] **Product IDs pinned** — see "Pinning your product IDs" below. Until this
+      is done the app and the bench reject every code (fail-closed).
+
+### Pinning your product IDs (required before first sale)
+
+Lemon Squeezy's `/licenses/validate` answers for keys issued by **any** Lemon
+Squeezy store, so ReviveBench pins your store/product/variant IDs and rejects
+anything that does not match. Copy the three IDs from the dashboard:
+
+| ID | Where to copy it from |
+| --- | --- |
+| `Store ID` | Store → Settings → Store ID |
+| `Product ID` | Products → your product → `⋯` menu → *Copy product ID* |
+| `Variant ID` | Products → your product → `⋯` menu → *Copy variant ID* |
+
+Then paste them into **both** places the app ships:
+
+1. Windows app — `branding.json` next to the executable:
+   ```json
+   "license": { "expect": { "storeId": 123456, "productId": 789012, "variantId": 345678 } }
+   ```
+   (same file lives in the repo root; regenerate the installer after editing)
+2. Bench — environment for the stick session:
+   ```sh
+   export RB_LS_STORE_ID=123456 RB_LS_PRODUCT_ID=789012 RB_LS_VARIANT_ID=345678
+   ```
+   (or bake them into `start-bench.sh` when you build the stick)
+
+A blank/missing `productId` means **"not configured"** — every code is
+rejected with *"This copy is not configured for its license product yet"*.
+A key from another store or product is rejected with *"That license code
+belongs to a different product."*
 
 ---
 

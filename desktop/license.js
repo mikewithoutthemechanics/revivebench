@@ -57,6 +57,47 @@ function endpointUrl(cfg, name) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Ownership gate (fail closed)                                        */
+/*                                                                     */
+/* Lemon Squeezy's /licenses/validate answers for keys from ANY store  */
+/* on their platform. Their own docs warn: verify store_id /          */
+/* product_id / variant_id in `meta` against YOUR product, otherwise   */
+/* "someone using a license key from another Lemon Squeezy product     */
+/* could use it to get access to your product." So: unconfigured IDs   */
+/* and mismatched IDs both reject the code.                            */
+/* ------------------------------------------------------------------ */
+
+function toNumOrNull(v) {
+  if (v === undefined || v === null || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function checkOwnership(expect, meta) {
+  const e = expect || {};
+  if (!toNumOrNull(e.productId)) {
+    return fail(
+      'not_configured',
+      'This copy is not configured for its license product yet (seller setup incomplete) — no code will be accepted.'
+    );
+  }
+  const pairs = [
+    ['storeId', e.storeId, meta && meta.store_id],
+    ['productId', e.productId, meta && meta.product_id],
+    ['variantId', e.variantId, meta && meta.variant_id]
+  ];
+  for (let i = 0; i < pairs.length; i++) {
+    const want = toNumOrNull(pairs[i][1]);
+    if (want === null) continue; // that particular ID not pinned
+    const got = toNumOrNull(pairs[i][2]);
+    if (got === null || got !== want) {
+      return fail('wrong_product', 'That license code belongs to a different product.');
+    }
+  }
+  return null;
+}
+
+/* ------------------------------------------------------------------ */
 /* Lemon Squeezy provider                                              */
 /* ------------------------------------------------------------------ */
 
@@ -134,6 +175,9 @@ function createLemonSqueezyProvider(cfg, deps) {
       if (!lk || data.valid !== true) {
         return fail('invalid', 'That license code is not valid. Check for typos and try again.');
       }
+
+      const gate = checkOwnership(cfg.expect, data.meta);
+      if (gate) return gate;
 
       const status = lk.status;
       if (status === 'expired') {

@@ -149,6 +149,7 @@ def new_license_client():
     return license_adapter.LicenseClient(
         mock=MOCK,
         base_url=os.environ.get("RB_LS_BASE_URL") or None,
+        expect=license_adapter.expect_from_env(),
     )
 
 
