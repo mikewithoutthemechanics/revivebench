@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReviveBench — Bench GUI</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">◆</span>
+    <span class="brand-name">ReviveBench</span>
+    <span class="brand-sub">Bench GUI</span>
+  </div>
+  <div class="topbar-right">
+    <span id="mock-badge" class="badge badge-mock" hidden>SIMULATION MODE</span>
+    <span id="conn-badge" class="badge badge-ok">● connected</span>
+    <button id="btn-diag" class="btn btn-ghost" type="button">Copy diagnostics</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- step rail -->
+  <nav class="rail" id="rail" aria-label="Steps"></nav>
+
+  <!-- main panel -->
+  <main class="main">
+
+    <!-- 1. SETUP -->
+    <section class="panel" data-panel="setup">
+      <h1 class="panel-title">Prepare tools</h1>
+      <p class="panel-lead">Installs the Apple USB tools and makes sure Legacy-iOS-Kit is
+        present. Safe to run again any time.</p>
+      <button class="btn btn-primary btn-big" id="btn-setup" type="button">Prepare tools</button>
+      <div class="hint" id="setup-hint"></div>
+    </section>
+
+    <!-- 2. LICENSE -->
+    <section class="panel" data-panel="license" hidden>
+      <h1 class="panel-title">License code</h1>
+      <p class="panel-lead">One code = one device unlock. The code is only consumed
+        <strong>after</strong> the unlock is verified.</p>
+      <div class="row">
+        <input id="license-input" class="input input-code" type="text"
+               placeholder="RB-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false">
+        <button class="btn btn-primary btn-big" id="btn-validate" type="button">Check code</button>
+      </div>
+      <div id="license-result" class="result" hidden></div>
+      <div class="counters" id="license-counters" hidden>
+        <div class="counter"><span class="counter-num" id="cnt-remaining">–</span><span
+              class="counter-label">unlocks remaining</span></div>
+        <div class="counter"><span class="counter-num" id="cnt-usage">–</span><span
+              class="counter-label">used</span></div>
+        <div class="counter"><span class="counter-num" id="cnt-limit">–</span><span
+              class="counter-label">limit</span></div>
+      </div>
+    </section>
+
+    <!-- 3. DEVICE -->
+    <section class="panel" data-panel="device" hidden>
+      <h1 class="panel-title">Device detection</h1>
+      <div class="bigstatus" id="device-card">
+        <div class="bigstatus-mode" id="device-mode">looking for a device…</div>
+        <div class="bigstatus-detail" id="device-detail">Plug the device in directly (USB-A, no hub).</div>
+      </div>
+      <div class="kv" id="device-kv"></div>
+      <button class="btn btn-ghost" id="btn-refresh" type="button">Refresh now</button>
+    </section>
+
+    <!-- 4. DFU -->
+    <section class="panel" data-panel="dfu" hidden>
+      <h1 class="panel-title">Put the device in DFU mode</h1>
+      <p class="panel-lead">Screen must end up <strong>black</strong>. The timer below
+        advances on its own as soon as the cable reports DFU.</p>
+
+      <div class="timeline" id="dfu-timeline">
+        <div class="tl-phase" data-phase="power_home">
+          <div class="tl-num" id="tl-num-1">10</div>
+          <div class="tl-label">Hold <b>Power + Home</b></div>
+          <div class="tl-bar"><i id="tl-bar-1"></i></div>
+        </div>
+        <div class="tl-phase" data-phase="release_power">
+          <div class="tl-num" id="tl-num-2">5</div>
+          <div class="tl-label">Release <b>Power</b>, keep holding <b>Home</b></div>
+          <div class="tl-bar"><i id="tl-bar-2"></i></div>
+        </div>
+        <div class="tl-phase" data-phase="hold_home">
+          <div class="tl-num">∞</div>
+          <div class="tl-label">Keep holding <b>Home</b> until detected</div>
+          <div class="tl-bar"><i id="tl-bar-3"></i></div>
+        </div>
+      </div>
+
+      <div class="bigstatus" id="dfu-status">
+        <div class="bigstatus-mode">Ready when you are</div>
+        <div class="bigstatus-detail">Press “Start DFU guide” and hold the buttons.</div>
+      </div>
+
+      <div class="row">
+        <button class="btn btn-primary btn-big" id="btn-dfu-start" type="button">Start DFU guide</button>
+        <button class="btn btn-warn btn-big" id="btn-dfu-retry" type="button" hidden>Redo the sequence</button>
+      </div>
+      <div class="help">
+        <b>Trouble?</b> Use a direct USB-A port — no hubs, docks or USB-C adapters.
+        Hold both buttons for a full 10 seconds, then release Power and keep Home.
+      </div>
+    </section>
+
+    <!-- 5. RAMDISK -->
+    <section class="panel" data-panel="ramdisk" hidden>
+      <h1 class="panel-title">Boot the SSH ramdisk</h1>
+      <p class="panel-lead">Runs <code>restore.sh --sshrd</code> from the Legacy-iOS-Kit
+        folder and streams its output below. Takes 2–4 minutes and needs internet.</p>
+      <button class="btn btn-primary btn-big" id="btn-ramdisk" type="button">Boot ramdisk</button>
+      <div class="hint" id="ramdisk-hint"></div>
+      <div class="miniLog" id="ramdisk-log"></div>
+    </section>
+
+    <!-- 6. ACTIVATOR -->
+    <section class="panel" data-panel="activator" hidden>
+      <h1 class="panel-title">Run activator</h1>
+      <p class="panel-lead">Verifies the payload tarball (SHA256), extracts it and runs
+        the activator against the device on port 6414.</p>
+      <button class="btn btn-primary btn-big" id="btn-activator" type="button">Run activator</button>
+      <div class="hint" id="activator-hint"></div>
+      <div class="miniLog" id="activator-log"></div>
+    </section>
+
+    <!-- 7. VERIFY -->
+    <section class="panel" data-panel="verify" hidden>
+      <h1 class="panel-title">Verify the unlock</h1>
+      <p class="panel-lead">Polls <code>ActivationState</code> until it is no longer
+        <code>Unactivated</code> (up to 120 s) while the device boots normally.</p>
+      <button class="btn btn-primary btn-big" id="btn-verify" type="button">Check unlock</button>
+      <div class="bigstatus" id="verify-status" hidden>
+        <div class="bigstatus-mode" id="verify-mode">–</div>
+        <div class="bigstatus-detail" id="verify-detail"></div>
+      </div>
+    </section>
+
+    <!-- 8. BURN -->
+    <section class="panel" data-panel="burn" hidden>
+      <h1 class="panel-title">Consume license code</h1>
+      <p class="panel-lead">The unlock is done. This burns one code against this device
+        and creates the audit record.</p>
+
+      <label class="pop" for="pop-check">
+        <input type="checkbox" id="pop-check">
+        <span>Customer ownership verified (invoice/receipt on file)</span>
+      </label>
+
+      <div class="instance" id="instance-preview">RB-…-…</div>
+
+      <button class="btn btn-primary btn-big" id="btn-burn" type="button">Burn 1 code</button>
+
+      <div id="burn-warning" class="warnbox" hidden>
+        <div class="warnbox-title">Unlock succeeded — code not recorded yet</div>
+        <div class="warnbox-body" id="burn-warning-body"></div>
+        <button class="btn btn-warn" id="btn-burn-retry" type="button">Retry burn</button>
+      </div>
+
+      <div class="bigstatus" id="burn-success" hidden>
+        <div class="bigstatus-mode">Unlock complete</div>
+        <div class="bigstatus-detail" id="burn-success-detail"></div>
+        <div class="pop-state" id="pop-state"></div>
+        <button class="btn btn-primary btn-big" id="btn-repeat" type="button" hidden>
+          Unlock another device</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- live log -->
+  <aside class="logwrap">
+    <div class="loghead">
+      <span>Live log</span>
+      <button class="btn btn-ghost btn-sm" id="btn-clear-log" type="button">Clear view</button>
+    </div>
+    <div class="log" id="log"></div>
+  </aside>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

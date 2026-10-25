@@ -1,0 +1,26 @@
+{
+  "productName": "ReviveBench",
+  "tagline": "Repair-shop license tool",
+  "version": "1.0.0",
+  "iso": {
+    "fileName": "ReviveBench.iso",
+    "sha256": "45a835b5dddaf40e84d776549e0b19b3fbd49673b6cc6434ebddbfcd217df776",
+    "minSizeBytes": 6442450944
+  },
+  "license": {
+    "provider": "lemonsqueezy",
+    "baseUrl": "https://api.lemonsqueezy.com/v1",
+    "endpoints": {
+      "validate": "/licenses/validate",
+      "activate": "/licenses/activate",
+      "deactivate": "/licenses/deactivate"
+    },
+    "timeoutMs": 15000,
+    "minRequestIntervalMs": 1500
+  },
+  "support": {
+    "url": "https://example.com/revivebench/support",
+    "devicesUrl": "https://example.com/revivebench/supported-devices",
+    "technicianDoc": "packaging/TECHNICIAN.md"
+  }
+}

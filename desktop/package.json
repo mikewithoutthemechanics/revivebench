@@ -1,0 +1,64 @@
+{
+  "name": "revivebench-desktop",
+  "productName": "ReviveBench",
+  "version": "1.0.0",
+  "description": "ReviveBench - repair-shop license tool and guided Linux live-USB writer",
+  "private": true,
+  "main": "main.js",
+  "license": "UNLICENSED",
+  "author": "ReviveBench",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "electron . --smoke --smoke-write",
+    "sync:bench": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\sync_bench.ps1",
+    "pack:dir": "npm run sync:bench && electron-builder --dir",
+    "pack:win": "npm run sync:bench && electron-builder --win --publish never"
+  },
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.revivebench.desktop",
+    "productName": "ReviveBench",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "npmRebuild": false,
+    "publish": null,
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "license.js",
+      "renderer/**/*"
+    ],
+    "extraResources": [
+      { "from": "scripts/write_stick.ps1", "to": "scripts/write_stick.ps1" },
+      { "from": "scripts/list_disks.ps1", "to": "scripts/list_disks.ps1" },
+      { "from": "resources/bench", "to": "resources/bench", "filter": ["**/*"] },
+      { "from": "resources/payload", "to": "resources/payload", "filter": ["**/*"] },
+      { "from": "../branding.json", "to": "branding.json" },
+      { "from": "../packaging/TECHNICIAN.md", "to": "packaging/TECHNICIAN.md" }
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ReviveBench",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable-${arch}.${ext}"
+    }
+  }
+}

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:;">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReviveBench</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4.5 4.5 0 0 0-6 6l-6 6 3 3 6-6a4.5 4.5 0 0 0 6-6l-3 3-3-3 3-3z"/></svg>
+    </span>
+    <span class="brand-name" id="brandName">ReviveBench</span>
+    <span class="brand-tag" id="brandTag">Repair-shop license tool</span>
+  </div>
+
+  <nav class="rail" aria-label="Setup progress">
+    <ol id="railList">
+      <li data-rail="1"><span class="dot" aria-hidden="true">1</span><span class="rail-label">Welcome</span></li>
+      <li data-rail="2"><span class="dot" aria-hidden="true">2</span><span class="rail-label">License</span></li>
+      <li data-rail="3"><span class="dot" aria-hidden="true">3</span><span class="rail-label">ISO</span></li>
+      <li data-rail="4"><span class="dot" aria-hidden="true">4</span><span class="rail-label">USB</span></li>
+      <li data-rail="5"><span class="dot" aria-hidden="true">5</span><span class="rail-label">Write</span></li>
+      <li data-rail="6"><span class="dot" aria-hidden="true">6</span><span class="rail-label">Done</span></li>
+    </ol>
+  </nav>
+
+  <div class="step-count" id="stepCount">Step 1 of 6</div>
+</header>
+
+<main id="main">
+
+  <!-- 1. WELCOME -->
+  <section class="step" data-step="1" aria-labelledby="h-step1">
+    <div class="step-inner">
+      <p class="eyebrow">Stick builder</p>
+      <h1 id="h-step1" tabindex="-1">Build your <span class="accent" id="heroName">ReviveBench</span> stick</h1>
+      <p class="lede">This wizard writes the guided bench environment onto a USB stick: a bootable Linux
+        live image plus the repair payload. A tech then boots the stick, follows the on-screen bench flow,
+        and consumes one license code per verified device unlock.</p>
+
+      <div class="card">
+        <h2 class="card-title">Before you start</h2>
+        <ul class="req-list">
+          <li><span class="req-icon ok" aria-hidden="true">✓</span>
+            <span><strong>USB stick, 8 GB or larger</strong> — everything currently on it will be erased.</span></li>
+          <li><span class="req-icon ok" aria-hidden="true">✓</span>
+            <span><strong>Internet connection</strong> — license codes are checked online (steps 2 and later on the bench).</span></li>
+          <li><span class="req-icon ok" aria-hidden="true">✓</span>
+            <span><strong>A supported 32-bit iOS device</strong> — v1 is proven on iPad mini 1 (iPad2,5), iOS 9.3.5.</span></li>
+          <li><span class="req-icon warn" aria-hidden="true">!</span>
+            <span><strong>One code = one unlock</strong> — codes burn only after a verified successful unlock.</span></li>
+        </ul>
+      </div>
+
+      <p class="inline-link">
+        <a href="#" id="linkDevices" class="link">Supported-device matrix <span aria-hidden="true">→</span></a>
+      </p>
+    </div>
+  </section>
+
+  <!-- 2. LICENSE -->
+  <section class="step" data-step="2" aria-labelledby="h-step2" hidden>
+    <div class="step-inner">
+      <p class="eyebrow">Step 2</p>
+      <h1 id="h-step2" tabindex="-1">Enter your license code</h1>
+      <p class="lede">Paste the code from your proof-of-purchase email. It is verified now and
+        <strong>consumed only after a verified unlock</strong> on the bench.</p>
+
+      <div class="card">
+        <label class="field-label" for="licenseInput">License code</label>
+        <div class="field-row">
+          <input id="licenseInput" class="input mono" type="text" inputmode="text" autocomplete="off"
+                 spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX" aria-describedby="licenseHint">
+          <button id="btnValidate" class="btn primary" type="button">Check code</button>
+        </div>
+        <p class="hint" id="licenseHint">Internet required. Codes are checked at most a few times per minute.</p>
+
+        <div id="licenseStatus" class="status" data-state="idle" role="status">
+          <span class="status-icon" aria-hidden="true">•</span>
+          <span class="status-text" id="licenseStatusText">Waiting for a code.</span>
+        </div>
+      </div>
+
+      <p class="inline-link"><a href="#" id="linkSupport1" class="link">Problems with your code? Contact support</a></p>
+    </div>
+  </section>
+
+  <!-- 3. ISO -->
+  <section class="step" data-step="3" aria-labelledby="h-step3" hidden>
+    <div class="step-inner">
+      <p class="eyebrow">Step 3</p>
+      <h1 id="h-step3" tabindex="-1">Select the product ISO</h1>
+      <p class="lede">The wizard first looks for <span class="mono" id="isoFileName">ReviveBench.iso</span> next to
+        the installed app. If it is not there, pick it manually, then we verify its SHA-256 checksum.</p>
+
+      <div class="card">
+        <div class="iso-file">
+          <div>
+            <div class="label-sm">Selected file</div>
+            <div class="mono ellipsis" id="isoPath">— none selected —</div>
+            <div class="muted" id="isoSize"></div>
+          </div>
+          <div class="btn-row">
+            <button id="btnDetect" class="btn ghost" type="button">Auto-detect</button>
+            <button id="btnBrowse" class="btn" type="button">Browse…</button>
+          </div>
+        </div>
+
+        <div id="isoVerify" class="status" data-state="idle" role="status">
+          <span class="status-icon" aria-hidden="true">•</span>
+          <span class="status-text" id="isoVerifyText">No file selected yet.</span>
+        </div>
+
+        <div id="isoMismatch" class="warnbox" hidden>
+          <div class="warnbox-title">Checksum does not match the pinned value</div>
+          <p class="warnbox-text">If the seller replaced or rebuilt the ISO, this is expected. Only continue if you
+            trust the source — type <span class="mono strong">CONFIRM</span> to override.</p>
+          <dl class="hashgrid">
+            <dt>Computed</dt><dd class="mono" id="hashComputed">—</dd>
+            <dt>Expected</dt><dd class="mono" id="hashExpected">—</dd>
+          </dl>
+          <label class="field-label" for="isoConfirm">Type CONFIRM to continue anyway</label>
+          <input id="isoConfirm" class="input mono" type="text" autocomplete="off" spellcheck="false" placeholder="CONFIRM">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. USB -->
+  <section class="step" data-step="4" aria-labelledby="h-step4" hidden>
+    <div class="step-inner">
+      <p class="eyebrow">Step 4</p>
+      <h1 id="h-step4" tabindex="-1">Choose the USB stick</h1>
+      <p class="lede">Only removable USB disks are listed. <strong>Everything on the selected stick will be
+        erased</strong>, including the Linux image and a second FAT32 partition named <span class="mono">REVBENCH</span>.</p>
+
+      <div class="card">
+        <div class="card-head">
+          <h2 class="card-title">Detected USB disks</h2>
+          <button id="btnRefreshDisks" class="btn ghost" type="button">Refresh</button>
+        </div>
+
+        <div id="diskLoading" class="status" data-state="loading" role="status">
+          <span class="status-icon spin" aria-hidden="true">◌</span>
+          <span class="status-text">Scanning for USB disks…</span>
+        </div>
+
+        <div id="diskError" class="errbox" role="alert" hidden>
+          <div class="errbox-title">Could not list disks</div>
+          <p class="errbox-text" id="diskErrorText"></p>
+        </div>
+
+        <div id="diskEmpty" class="empty" hidden>
+          <div class="empty-icon" aria-hidden="true">␄</div>
+          <p><strong>No USB sticks found.</strong></p>
+          <p class="muted">Plug in a stick of 6 GB or larger (directly into the PC, not through a hub) and press Refresh.</p>
+        </div>
+
+        <fieldset id="diskList" class="disk-list" hidden>
+          <legend class="sr-only">USB disks</legend>
+        </fieldset>
+
+        <div id="diskConfirmBox" class="confirmbox" hidden>
+          <div class="confirm-target" id="confirmTarget"></div>
+          <label class="field-label" for="usbConfirm">Type <span class="mono strong" id="usbToken">ERASE-1</span> to confirm</label>
+          <input id="usbConfirm" class="input mono" type="text" autocomplete="off" spellcheck="false">
+        </div>
+
+        <label class="check-row" for="dryRun">
+          <input id="dryRun" type="checkbox">
+          <span><strong>Dry run</strong> — run every check and report what would happen, without touching any disk (no admin prompt).</span>
+        </label>
+
+        <p class="hint" id="elevateHint" hidden>Pressing continue will ask for administrator approval (UAC), then the
+          write begins. Keep the stick plugged in.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. WRITE -->
+  <section class="step" data-step="5" aria-labelledby="h-step5" hidden>
+    <div class="step-inner">
+      <p class="eyebrow">Step 5</p>
+      <h1 id="h-step5" tabindex="-1">Writing the stick</h1>
+
+      <div class="card">
+        <div class="progress-head">
+          <span id="writePhase">Waiting to start…</span>
+          <span id="writePct" class="mono">0%</span>
+        </div>
+        <progress id="writeBar" class="progress" max="100" value="0" aria-label="Write progress"></progress>
+        <p class="hint" id="writeWarn">Do not unplug the stick or shut down this PC.</p>
+      </div>
+
+      <div id="writeError" class="errbox" role="alert" hidden>
+        <div class="errbox-title">The write did not finish</div>
+        <p class="errbox-text" id="writeErrorText"></p>
+        <div class="btn-row">
+          <button id="btnDiag" class="btn" type="button">Copy diagnostics</button>
+          <button id="btnRetry" class="btn ghost" type="button">Back — try another stick</button>
+        </div>
+      </div>
+
+      <div class="card logcard">
+        <div class="card-head">
+          <h2 class="card-title">Log</h2>
+          <span class="muted mono" id="logPathLabel"></span>
+        </div>
+        <pre id="writeLog" class="log" role="log" tabindex="0"><span class="muted">Log output will appear here…</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. DONE -->
+  <section class="step" data-step="6" aria-labelledby="h-step6" hidden>
+    <div class="step-inner">
+      <p class="eyebrow">Step 6</p>
+      <h1 id="h-step6" tabindex="-1" class="ok-h"><span class="ok-badge" aria-hidden="true">✓</span> Stick ready</h1>
+      <p class="lede">The stick now has two parts: the bootable Linux image and the
+        <span class="mono">REVBENCH</span> data partition with the bench tool and payload.</p>
+
+      <div class="card">
+        <h2 class="card-title">Boot it on the repair bench</h2>
+        <ol class="steps-list">
+          <li>Reboot the bench PC with the stick inserted.</li>
+          <li>Spam <kbd>F12</kbd> at the power-on screen until the boot menu appears.</li>
+          <li>Pick the entry that starts with <span class="mono">UEFI:</span> and the stick's name.</li>
+          <li>Choose <strong>Start Linux Mint</strong> and wait for the desktop.</li>
+          <li>Open the <span class="mono">REVBENCH</span> drive in Files, then double-click
+            <span class="mono">start-bench.sh</span> (fallback: right-click → <em>Run in terminal</em>).</li>
+          <li>The bench opens at <span class="mono">http://127.0.0.1:8777</span> — follow the on-screen flow.</li>
+        </ol>
+      </div>
+
+      <div class="infobox">
+        <div class="infobox-title">If the boot menu does not appear or Mint refuses to start</div>
+        <p>Reboot → <kbd>F2</kbd> into BIOS → disable <strong>Secure Boot</strong> → save &amp; exit → retry
+          <kbd>F12</kbd>. Most shop boards need this once; the setting persists.</p>
+      </div>
+
+      <div class="btn-row wrap">
+        <button id="btnTech" class="btn" type="button">Open TECHNICIAN.md</button>
+        <button id="btnAgain" class="btn ghost" type="button">Write another stick</button>
+        <button id="btnFinish" class="btn primary" type="button">Finish</button>
+      </div>
+      <p class="muted" id="techNote" hidden></p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="navbar">
+  <button id="btnBack" class="btn ghost" type="button">← Back</button>
+  <div class="nav-right">
+    <span class="nav-hint" id="navHint"></span>
+    <button id="btnNext" class="btn primary" type="button">Continue →</button>
+  </div>
+</footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>

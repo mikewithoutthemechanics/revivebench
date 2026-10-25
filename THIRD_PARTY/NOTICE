@@ -1,0 +1,76 @@
+ReviveBench
+Copyright (c) 2026 ReviveBench authors
+
+This product includes software developed by third parties. Attribution and
+license notices for each are listed below and are shipped with every copy of
+this product (download and physical USB media) in the THIRD_PARTY/ folder.
+
+--------------------------------------------------------------------------------
+1. Legacy-iOS-Kit  (GNU General Public License v3.0)
+--------------------------------------------------------------------------------
+Project   : https://github.com/LukeZGD/Legacy-iOS-Kit
+Author    : LukeZGD
+License   : GPL-3.0-only  (full text: THIRD_PARTY/GPL-3.0.txt)
+Bundled as: payload/legacy-ios-kit/ (unmodified), invoked as a separate program
+            at runtime by bench_gui.py via `bash restore.sh --sshrd`.
+Source    : available at the URL above and as offered in THIRD_PARTY/SOURCE-OFFER.md.
+
+ReviveBench does not modify Legacy-iOS-Kit. The two programs are aggregated on
+the same distribution medium and communicate only through command-line
+invocation and the terminal output stream; no code from Legacy-iOS-Kit is
+linked into, or incorporated into, the ReviveBench GUI.
+
+--------------------------------------------------------------------------------
+2. Legacy iOS Activator  (Apache License 2.0)
+--------------------------------------------------------------------------------
+Project   : https://github.com/maksimka539/legacyactivator
+Author    : maksimka539
+License   : Apache-2.0  (full text: THIRD_PARTY/Apache-2.0.txt)
+Bundled as: payload/Legacy-iOS-Activator2-7.tar.gz
+            sha256 97ac871064c944845816d004a5aebe340670dd48545cd15733bf13d59ceed783
+Form      : PyInstaller single-file executable ("Legacy iOS Activator"),
+            which itself bundles libimobiledevice/irecovery/sshpass binaries for
+            linux_x86_64, linux_arm64, macos_intel and macos_arm64, and the
+            PyArmor runtime.
+
+This product is licensed under the Apache License, Version 2.0 (see the
+LICENSE file in the upstream repository and THIRD_PARTY/Apache-2.0.txt here).
+You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+
+--------------------------------------------------------------------------------
+3. System tools invoked at runtime (not bundled in this repository)
+--------------------------------------------------------------------------------
+The bench invokes these distribution packages when present; they are installed
+by the setup step from the user's own package manager, not by us:
+
+  libimobiledevice-utils (idevice_id, ideviceinfo)  — GPL-3.0/LGPL-2.1
+  libirecovery-utils (irecovery)                    — LGPL-2.1
+  usbmuxd                                           — GPL-2.0
+  git, curl, unzip, xxd, sshfs                      — respective upstream licenses
+
+--------------------------------------------------------------------------------
+4. Linux Mint (stick image, written by the Windows app)
+--------------------------------------------------------------------------------
+The USB stick's boot partition is an unmodified Linux Mint ISO
+(linuxmint-22.3-xfce-64bit.iso, sha256 pinned in branding.json). Linux Mint is
+distributed under its own terms; see linuxmint.com/about.php. Mint ships its own
+third-party notice file inside the ISO.
+
+--------------------------------------------------------------------------------
+5. Licensing service
+--------------------------------------------------------------------------------
+License validation/activation calls the Lemon Squeezy License API
+(https://lemonsqueezy.com) through bench/license_adapter.py. Lemon Squeezy's
+client libraries are not used; only its HTTP API is. No Lemon Squeezy code is
+distributed in this product.
+
+--------------------------------------------------------------------------------
+6. ReviveBench itself
+--------------------------------------------------------------------------------
+ReviveBench (bench/, desktop/, packaging/) is proprietary, sold under a
+commercial license. See SOURCE-OFFER.md for the GPL-3.0 §5 written offer covering
+the bundled GPL-3.0 components.
