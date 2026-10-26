@@ -44,6 +44,7 @@ HTTP facts encoded here (as of 2026, per PRODUCT.md):
 from __future__ import annotations
 
 import json
+import os
 import threading
 import time
 import urllib.error
@@ -138,10 +139,16 @@ class LicenseClient:
         rate_window: float = DEFAULT_RATE_WINDOW,
         mock: bool = False,
         transport=None,
+        expect: dict | None = None,
     ):
         self.base_url = (base_url or DEFAULT_BASE_URL).rstrip("/")
         self.timeout = timeout
         self.mock = bool(mock)
+        # Expected store/product/variant IDs for OUR product (see _gate_expectation).
+        self.expect = {
+            k: v for k, v in dict(expect or {}).items()
+            if v not in (None, "", "0", 0)
+        }
         self.limiter = RateLimiter(rate_limit, rate_window)
         # transport(method, url, data_bytes, headers) -> (status:int, body:bytes)
         # Lets tests (and future backends) intercept HTTP without touching callers.
@@ -285,10 +292,49 @@ class LicenseClient:
             raw=payload,
         )
         _apply_limit_gate(res)
+        if res["ok"]:
+            self._gate_expectation(res, payload)
         if not res["ok"]:
-            res["error"] = _status_message(st, res)
-            res["error_kind"] = "rejected"
+            res["error"] = res["error"] or _status_message(st, res)
+            res["error_kind"] = res["error_kind"] or "rejected"
         return res
+
+    # -- ownership gate -----------------------------------------------------
+    # Lemon Squeezy's /licenses/validate answers for keys from ANY store on
+    # their platform, so without this check a free key generated in someone
+    # else's Lemon Squeezy store would unlock ReviveBench. LS docs say the
+    # same thing: "verify that the store_id, product_id and/or variant_id from
+    # this response match the IDs of your Lemon Squeezy product ... If you
+    # don't do this, someone using a license key from another Lemon Squeezy
+    # product could use it to get access to your product."
+    #
+    # FAIL-CLOSED: live mode with no configured product ID rejects the code.
+
+    def _gate_expectation(self, res: dict, payload: dict) -> None:
+        if self.mock:
+            return
+        expect = self.expect or {}
+        if not expect.get("product_id"):
+            res.update(
+                ok=False,
+                error="This copy is not configured for its license product yet "
+                      "(seller setup incomplete) — no code will be accepted.",
+                error_kind="rejected",
+            )
+            return
+        meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
+        for field in ("store_id", "product_id", "variant_id"):
+            want = expect.get(field)
+            if want in (None, ""):
+                continue
+            got = _as_int(meta.get(field))
+            if got is None or got != int(want):
+                res.update(
+                    ok=False,
+                    error="That license code belongs to a different product.",
+                    error_kind="rejected",
+                )
+                return
 
     # -- mock --------------------------------------------------------------
 
@@ -349,6 +395,31 @@ def _apply_limit_gate(res: dict) -> dict:
         res["error"] = "Code already consumed (no unlocks remaining)."
         res["error_kind"] = "rejected"
     return res
+
+
+def expect_from_env(env: dict | None = None) -> dict:
+    """Expected store/product/variant IDs for OUR product, from the environment.
+
+    RB_LS_STORE_ID / RB_LS_PRODUCT_ID / RB_LS_VARIANT_ID -- set in the stick's
+    start script or bench shell. Missing values mean "not configured", which
+    _gate_expectation treats as fail-closed (no code accepted).
+    """
+    env = os.environ if env is None else env
+
+    def _num(name: str):
+        raw = str(env.get(name, "") or "").strip()
+        if not raw:
+            return None
+        try:
+            return int(raw)
+        except ValueError:
+            return None
+
+    return {
+        "store_id": _num("RB_LS_STORE_ID"),
+        "product_id": _num("RB_LS_PRODUCT_ID"),
+        "variant_id": _num("RB_LS_VARIANT_ID"),
+    }
 
 
 def _as_int(v) -> int | None:
